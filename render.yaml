@@ -1,0 +1,12 @@
+# Render Deployment Configuration
+# Place this file at root of project for auto-detection
+
+# Services
+services:
+  - type: web
+    name: senjivis-komès
+    envVars:
+      - key: SUPABASE_URL
+        value: https://rqurlyyslbrpdjnabrts.supabase.co
+      - key: SUPABASE_KEY
+        sync: false  # Don't sync to storage
