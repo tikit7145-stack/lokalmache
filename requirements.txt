@@ -1,7 +1,17 @@
-flask
-gunicorn
-supabase
-python-dotenv
-pandas
-dash
-dash-bootstrap-components
+# Core Dashboard Framework
+dash==2.14.2
+plotly==5.18.0
+
+# Data Processing
+pandas==2.1.1
+numpy==1.24.3
+
+# Database
+supabase==2.0.0
+python-dotenv==1.0.0
+
+# Web Server
+gunicorn==21.2.0
+
+# Styling
+dash-bootstrap-components==1.4.2
