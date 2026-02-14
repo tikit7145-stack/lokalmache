@@ -1,17 +1,15 @@
-# Core Dashboard Framework
-dash==2.14.2
-plotly==5.18.0
+Mwen wè sa k rive a! Erè sa a (metadata-generation-failed pou pandas) rive paske Railway ap itilize Python 3.13, men vèsyon pandas==2.1.1 ou te mete a twò vye pou vèsyon Python sa a. Yo pa konpatib.
 
-# Data Processing
-pandas==2.1.1
-numpy==1.24.3
+Pa bay tèt ou pwoblèm, nou pral ranje sa nan 2 segonn nan mete vèsyon ki pi resan yo ki mache ak Python nèf la.
 
-# Database
-supabase==2.0.0
-python-dotenv==1.0.0
+1. Mizajou requirements.txt
+Louvri fichiye requirements.txt la nan VS Code, efase tout sa k ladan l, epi mete vèsyon sa yo pito (mwen retire nimewo vèsyon yo pou Railway ka pran sa k pi bon an otomatikman):
 
-# Web Server
-gunicorn==21.2.0
-
-# Styling
-dash-bootstrap-components==1.4.2
+flask
+gunicorn
+supabase
+python-dotenv
+pandas
+dash
+dash-bootstrap-components
+plotly
