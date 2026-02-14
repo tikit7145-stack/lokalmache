@@ -58,3 +58,90 @@ def create_stat_box(icon, title, value, trend=""):
             ),
         ]
     )
+
+
+def create_order_status_card(status_label, count, color, status_key):
+    """Kriye kat estati kòmand"""
+    return html.Div(
+        className="status-card",
+        style={'borderLeft': f'4px solid {color}', 'borderRadius': '8px'},
+        children=[
+            html.Div(
+                className="status-header",
+                children=[
+                    html.Span(status_label, className="status-label"),
+                    html.Span(str(count), className="status-count", style={'color': color})
+                ]
+            ),
+        ]
+    )
+
+
+def create_order_timeline():
+    """Kriye timeline pou suiv kòmand"""
+    return html.Div(
+        className="order-timeline",
+        children=[
+            html.Div(
+                className="timeline-step",
+                children=[
+                    html.Div(className="timeline-marker pending"),
+                    html.Span("⏳ Atant")
+                ]
+            ),
+            html.Div(className="timeline-line"),
+            html.Div(
+                className="timeline-step",
+                children=[
+                    html.Div(className="timeline-marker confirmed"),
+                    html.Span("✅ Konfime")
+                ]
+            ),
+            html.Div(className="timeline-line"),
+            html.Div(
+                className="timeline-step",
+                children=[
+                    html.Div(className="timeline-marker transit"),
+                    html.Span("🚚 Nan Wout")
+                ]
+            ),
+            html.Div(className="timeline-line"),
+            html.Div(
+                className="timeline-step",
+                children=[
+                    html.Div(className="timeline-marker delivered"),
+                    html.Span("📦 Rive")
+                ]
+            ),
+        ]
+    )
+
+
+def create_order_status_badge(status):
+    """Kriye badge pou estati kòmand"""
+    status_colors = {
+        'pending': '#FFA500',
+        'confirmed': '#4CAF50',
+        'in_transit': '#2196F3',
+        'delivered': '#673AB7',
+    }
+    
+    status_labels = {
+        'pending': '⏳ Atant',
+        'confirmed': '✅ Konfime',
+        'in_transit': '🚚 Nan Wout',
+        'delivered': '📦 Rive',
+    }
+    
+    return html.Span(
+        status_labels.get(status, status),
+        style={
+            'backgroundColor': status_colors.get(status, '#999'),
+            'color': 'white',
+            'padding': '4px 12px',
+            'borderRadius': '20px',
+            'fontSize': '0.85rem',
+            'fontWeight': 'bold'
+        }
+    )
+

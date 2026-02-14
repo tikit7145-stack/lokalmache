@@ -13,7 +13,8 @@ import os
 
 # Importe database ak components
 from src.database import get_supabase_manager
-from src.components import create_card, create_metric_card
+from src.components import create_card, create_metric_card, create_order_status_card, create_order_timeline
+from src.order_manager import OrderStatusManager
 
 # Inisyalize aplikasyon
 app = dash.Dash(__name__, external_stylesheets=['assets/style.css'])
@@ -358,6 +359,90 @@ def get_app_layout():
                                 ]
                             ),
 
+                            # Order Status Section
+                            html.Div(
+                                className="charts-row",
+                                id="order-status-section",
+                                children=[
+                                    html.H3("📋 ESTATI KÒMAND", className="chart-title", style={"width": "100%", "marginBottom": "15px"}),
+                                ]
+                            ),
+
+                            html.Div(
+                                className="status-cards-container",
+                                id="status-cards-container",
+
+                                style={
+                                    "display": "grid",
+                                    "gridTemplateColumns": "repeat(4, 1fr)",
+                                    "gap": "15px",
+                                    "marginBottom": "30px",
+                                    "width": "100%"
+                                }
+                            ),
+
+                            # Order Status Update Controls
+                            html.Div(
+                                className="order-status-update-controls",
+                                style={"margin": "20px 0", "padding": "20px", "background": "white", "borderRadius": "12px", "border": "1px solid #E1E8ED", "boxShadow": "0 2px 8px rgba(0,0,0,0.08)"},
+                                children=[
+                                    html.H4("🔄 Modifye Estati Kòmand", style={"marginBottom": "15px", "color": "#2C3E50", "fontSize": "1.1rem", "fontWeight": "700"}),
+                                    html.Div([
+                                        html.Div([
+                                            html.Label("Chwazi Kòmand:", style={"marginBottom": "5px", "fontWeight": "600", "color": "#2C3E50", "display": "block"}),
+                                            dcc.Dropdown(
+                                                id="order-select-dropdown",
+                                                options=[{"label": f"{row['id'][:8]} - {row.get('user_name', 'N/A')} (${row.get('total_amount', 0)})", "value": row['id']} for _, row in orders_data.iterrows()],
+                                                value=orders_data['id'].iloc[0] if not orders_data.empty else None,
+                                                style={"width": "100%"}
+                                            ),
+                                        ], style={"flex": "1", "marginRight": "15px"}),
+                                        html.Div([
+                                            html.Label("Nouvo Estati:", style={"marginBottom": "5px", "fontWeight": "600", "color": "#2C3E50", "display": "block"}),
+                                            dcc.Dropdown(
+                                                id="status-select-dropdown",
+                                                options=[{"label": v['label'], "value": k} for k, v in OrderStatusManager.STATUSES.items()],
+                                                value="pending",
+                                                style={"width": "100%"}
+                                            ),
+                                        ], style={"flex": "1", "marginRight": "15px"}),
+                                        html.Div([
+                                            html.Button(
+                                                "✅ Mete ajou", 
+                                                id="update-status-btn", 
+                                                n_clicks=0, 
+                                                style={
+                                                    "background": "linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%)",
+                                                    "color": "white", 
+                                                    "border": "none", 
+                                                    "padding": "10px 20px", 
+                                                    "borderRadius": "6px", 
+                                                    "fontWeight": "bold",
+                                                    "cursor": "pointer",
+                                                    "width": "100%",
+                                                    "height": "42px",
+                                                    "marginTop": "22px",
+                                                    "fontSize": "0.95rem",
+                                                    "boxShadow": "0 4px 12px rgba(255, 107, 53, 0.3)"
+                                                }
+                                            ),
+                                        ], style={"flex": "0.8"}),
+                                    ], style={"display": "flex", "gap": "15px", "alignItems": "flex-start"}),
+                                    html.Div(id="update-status-message", style={"marginTop": "15px", "padding": "10px 12px", "borderRadius": "6px", "fontSize": "0.95rem", "fontWeight": "600"})
+                                ]
+                            ),
+
+                            html.Div(
+                                className="chart-container-full",
+                                children=[
+                                    html.H3("⏳📦 Sitèn Kòmand", className="chart-title"),
+                                    dcc.Graph(
+                                        id="order-status-chart",
+                                        className="chart-glassmorphism",
+                                    )
+                                ]
+                            ),
+
                             # Charts Row 1
                             html.Div(
                                 className="charts-row",
@@ -488,7 +573,9 @@ app.layout = get_app_layout()
     [Output('sales-chart', 'figure'),
      Output('category-chart', 'figure'),
      Output('top-products-chart', 'figure'),
-     Output('location-chart', 'figure')],
+     Output('location-chart', 'figure'),
+     Output('status-cards-container', 'children'),
+     Output('order-status-chart', 'figure')],
     Input('interval-component', 'n_intervals')
 )
 def update_charts_realtime(n):
@@ -498,12 +585,47 @@ def update_charts_realtime(n):
     new_products = db.get_products(limit=100)
     new_customers = db.get_customers(limit=100)
     
+    # Get order status data
+    status_summary = OrderStatusManager.get_status_summary()
+    status_cards = [
+        create_order_status_card(
+            status_info['label'],
+            status_info['count'],
+            status_info['color'],
+            status_key
+        )
+        for status_key, status_info in status_summary.items()
+    ]
+    
+    # Create order status chart
+    chart_data = OrderStatusManager.get_order_status_chart_data()
+    status_chart = {
+        'data': [
+            go.Pie(
+                labels=chart_data['labels'],
+                values=chart_data['values'],
+                marker=dict(colors=chart_data['colors']),
+                hovertemplate='<b>%{label}</b><br>Kòmand: %{value}<extra></extra>',
+            )
+        ],
+        'layout': go.Layout(
+            margin=dict(l=40, r=40, t=20, b=40),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(family="Segoe UI, sans-serif", color='rgba(200, 200, 200, 0.9)'),
+            hovermode='closest',
+            showlegend=True,
+        )
+    }
+    
     # Retounen graf yo avèk done ki nouvo
     return (
         create_sales_chart(new_orders),
         create_category_chart(),
         create_top_products_chart(new_products),
-        create_location_chart(new_orders)
+        create_location_chart(new_orders),
+        status_cards,
+        status_chart
     )
 
 @callback(
@@ -514,6 +636,32 @@ def update_charts_realtime(n):
 def refresh_metrics(n):
     """Rafréshi metrik yo - total vann, kliyan, pwodwi"""
     return [0]
+
+# ===============================
+# CALLBACK: UPDATE ORDER STATUS
+# ===============================
+@callback(
+    Output('update-status-message', 'children'),
+    Input('update-status-btn', 'n_clicks'),
+    [dash.dependencies.State('order-select-dropdown', 'value'),
+     dash.dependencies.State('status-select-dropdown', 'value')],
+    prevent_initial_call=True
+)
+def update_order_status_callback(n_clicks, order_id, new_status):
+    """Modifye estati kòmand an reyèl"""
+    if not n_clicks or not order_id or not new_status:
+        return ""
+    
+    try:
+        # Call the database update directly
+        result = db.update_order_status(order_id, new_status)
+        if result:
+            status_label = OrderStatusManager.STATUSES.get(new_status, {}).get('label', new_status)
+            return f"✅ Estati kòmand {str(order_id)[:8]} mete ajou: {status_label}"
+        else:
+            return f"❌ Echèk mete ajou estati"
+    except Exception as e:
+        return f"❌ Erè: {str(e)}"
 
 if __name__ == '__main__':
     print("🚀 Senjivis Komès 2026 ap demaré...")
